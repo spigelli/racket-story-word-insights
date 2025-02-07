@@ -1,4 +1,5 @@
 #lang racket
+(require racket/trace)	
 
 ; Takes a list of file names and returns the file name selected by the user
 (define (get-file-selection fileNames)
@@ -36,9 +37,22 @@
   (first (hash-ref filePathsByName fileName))
 )
 
+; Parses a line
+(define (parse-line line)
+  (define lineParts (string-split line "\n"))
+  (cond
+    [(>= (length lineParts) 1) (first lineParts)]
+    [else ""]
+  )
+  ; (define firstPart (first lineParts))
+)
+
 ; Reads the file at provided path and prints the contents
 (define (read-file filePath)
-  (displayln "TODO...")
+  (define file (open-input-file filePath #:mode 'text))
+  (define lines (port->lines file #:line-mode 'return))
+  (define linesParsed (map parse-line lines))
+  linesParsed
 )
 
 (define (main)
@@ -53,7 +67,8 @@
   (define selection (get-file-selection fileNames))
   (define filePath (get-file-path selection filePathsByName))
   (displayln (string-append "Reading file: " (path->string filePath)))
-  ; (read-file filePath)
+  (define lines (read-file filePath))
+  (for-each displayln lines)
 )
 
 (main)

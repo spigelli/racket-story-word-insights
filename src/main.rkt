@@ -1,65 +1,59 @@
-#lang racket
-(require racket/trace)	
+#lang racket/base
 
-; Takes a list of file names and returns the file name selected by the user
-(define (get-file-selection fileNames)
-  ; clear the screen
-  (system "clear")
-  (displayln "Select a file to read:")
-  (for-each (lambda (fileName index)
-    (displayln (string-append (number->string index) ". " (path->string fileName)))
-  ) fileNames (range (length fileNames)))
-  (display "Enter the number of the file you want to read: ")
-  (let ([fileIndex (read)])
-    (if (and (integer? fileIndex) (<= 0 fileIndex) (< fileIndex (length fileNames)))
-      (list-ref fileNames fileIndex)
-      (begin
-        (displayln "Invalid selection. Please try again.")
-        (get-file-selection fileNames)
-      )
-    )
-  )
+(module+ test
+  (require rackunit))
+
+;; Notice
+;; To install (from within the package directory):
+;;   $ raco pkg install
+;; To install (once uploaded to pkgs.racket-lang.org):
+;;   $ raco pkg install <<name>>
+;; To uninstall:
+;;   $ raco pkg remove <<name>>
+;; To view documentation:
+;;   $ raco docs <<name>>
+;;
+;; For your convenience, we have included LICENSE-MIT and LICENSE-APACHE files.
+;; If you would prefer to use a different license, replace those files with the
+;; desired license.
+;;
+;; Some users like to add a `private/` directory, place auxiliary files there,
+;; and require them in `main.rkt`.
+;;
+;; See the current version of the racket style guide here:
+;; http://docs.racket-lang.org/style/index.html
+
+;; Code here
+
+
+
+(module+ test
+  ;; Any code in this `test` submodule runs when this file is run using DrRacket
+  ;; or with `raco test`. The code here does not run when this file is
+  ;; required by another module.
+  (displayln "Running tests...")
+  (require "lib/files-test.rkt")
 )
 
-; Takes the list of file names and the directory path where the files are located
-(define (build-file-map fileNames filesDirPath)
-  (define mapEntries (
-    map ( lambda (fileName)
-      (list fileName (build-path filesDirPath fileName))
-    ) fileNames
-  ))
+(module+ main
+  (require "lib/files.rkt")
+  ;; (Optional) main submodule. Put code here if you need it to be executed when
+  ;; this file is run using DrRacket or the `racket` executable.  The code here
+  ;; does not run when this file is required by another module. Documentation:
+  ;; http://docs.racket-lang.org/guide/Module_Syntax.html#%28part._main-and-test%29
 
-  (make-hash mapEntries)
-)
-
-; Takes the file name and the hash map of file names to file paths and returns the file path
-(define (get-file-path fileName filePathsByName)
-  (first (hash-ref filePathsByName fileName))
-)
-
-; Parses a line
-(define (parse-line line)
-  (define lineParts (string-split line "\n"))
-  (cond
-    [(>= (length lineParts) 1) (first lineParts)]
-    [else ""]
-  )
-  ; (define firstPart (first lineParts))
-)
-
-; Reads the file at provided path and prints the contents
-(define (read-file filePath)
-  (define file (open-input-file filePath #:mode 'text))
-  (define lines (port->lines file #:line-mode 'return))
-  (define linesParsed (map parse-line lines))
-  linesParsed
-)
-
-(define (main)
+  ; (require racket/cmdline)
+  ; (define who (box "world"))
+  ; (command-line
+  ;   #:program "my-program"
+  ;   #:once-each
+  ;   [("-n" "--name") name "Who to say hello to" (set-box! who name)]
+  ;   #:args ()
+  ;   (printf "hello ~a~n" (unbox who))))
   (define filesDirPath (
-    simplify-path (
-      build-path
-        (path->directory-path (find-system-path 'run-file)) 'up 'up "files"
+  simplify-path (
+    build-path
+      (path->directory-path (find-system-path 'run-file)) 'up 'up "files"
     )
   ))
   (define fileNames (directory-list filesDirPath))
@@ -70,5 +64,3 @@
   (define lines (read-file filePath))
   (for-each displayln lines)
 )
-
-(main)

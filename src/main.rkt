@@ -33,6 +33,7 @@
   ;; required by another module.
   (displayln "Running tests...")
   (require "lib/files-test.rkt")
+  (require "lib/parse-test.rkt")
 )
 
 (module+ main

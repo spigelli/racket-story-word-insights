@@ -3,7 +3,8 @@
 (require rackunit "files.rkt")
 
 (define files-tests
-  (test-suite "files tests"
+  (test-suite "Files module tests"
+
     (test-case "build-file-map test"
       (check-equal?
         (build-file-map (list "a" "b" "c") "/path/to/files")
@@ -16,6 +17,7 @@
         )
       )
     )
+
   )
 )
 

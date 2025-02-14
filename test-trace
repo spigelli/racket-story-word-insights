@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# Takes a file as argument and runs
+# clear && racket -l errortrace -t <file> | more
+racket -l errortrace -t $1 | more

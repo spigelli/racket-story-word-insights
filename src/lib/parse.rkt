@@ -3,6 +3,8 @@
   clean-punctuation
   split-line
   remove-banned-char-excepts-quotes
+  remove-duplicates
+  list-includes
 )
 
 (require
@@ -24,11 +26,11 @@
 ))
 
 ; Tests if a list includes a value
-(define (includes list value)
+(define (list-includes list value)
   (cond
     [(empty? list) false]
     [(equal? (first list) value) true]
-    [else (includes (rest list) value)]
+    [else (list-includes (rest list) value)]
   )
 )
 
@@ -38,7 +40,7 @@
   (define charList (string->list word))
   (sequence->list (
       filter (lambda (char)
-        (includes allowedChars (string char))
+        (list-includes allowedChars (string char))
       ) charList
     )
   )
@@ -52,6 +54,13 @@
   (define semiCleanedCharList
     (remove-banned-char-excepts-quotes word)
   )
+  (cond 
+    [(empty? semiCleanedCharList) ""]
+    [else (clean-punctuation-2 semiCleanedCharList)]
+  )
+)
+
+(define (clean-punctuation-2 semiCleanedCharList)
   (define isFirstCharSingleQuote (char=? (first semiCleanedCharList) #\'))
   (define isLastCharSingleQuote (char=? (last semiCleanedCharList) #\'))
   (define lengthWithSurroundQuotes (length semiCleanedCharList))
@@ -68,4 +77,13 @@
     )
   )
   (list->string cleanedCharList)
+
+)
+
+(define (remove-duplicates lst)
+  (cond
+    [(empty? lst) '()]
+    [(list-includes (rest lst) (first lst)) (remove-duplicates (rest lst))]
+    [else (cons (first lst) (remove-duplicates (rest lst)))]
+  )
 )

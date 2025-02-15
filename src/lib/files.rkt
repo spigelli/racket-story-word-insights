@@ -5,6 +5,7 @@
   get-file-selection
   get-file-path
   read-file
+  read-words-to-remove
 )
 
 ; Takes a list of file names and returns the file name selected by the user
@@ -43,11 +44,15 @@
   (first (hash-ref filePathsByName fileName))
 )
 
+(define (lower-case str)
+  (string-downcase str)
+)
+
 ; Parses a line
 (define (parse-line line)
   (define lineParts (string-split line "\n"))
   (cond
-    [(>= (length lineParts) 1) (first lineParts)]
+    [(>= (length lineParts) 1) (lower-case (first lineParts))]
     [else ""]
   )
   ; (define firstPart (first lineParts))
@@ -59,4 +64,15 @@
   (define lines (port->lines file #:line-mode 'return))
   (define linesParsed (map parse-line lines))
   linesParsed
+)
+
+; Reads the words that must be removed from the file
+(define (read-words-to-remove)
+  (define filePath (
+  simplify-path (
+    build-path
+      (path->directory-path (find-system-path 'run-file)) 'up 'up "stop_words_english-1.txt"
+    )
+  ))
+  (read-file filePath)
 )

@@ -1,4 +1,5 @@
 #lang racket/base
+(require racket/list racket/pretty)
 
 (module+ test
   (require rackunit))
@@ -37,7 +38,7 @@
 )
 
 (module+ main
-  (require "lib/files.rkt")
+  (require "lib/files.rkt" "lib/parse.rkt" "lib/rankings.rkt")
   ;; (Optional) main submodule. Put code here if you need it to be executed when
   ;; this file is run using DrRacket or the `racket` executable.  The code here
   ;; does not run when this file is required by another module. Documentation:
@@ -51,17 +52,71 @@
   ;   [("-n" "--name") name "Who to say hello to" (set-box! who name)]
   ;   #:args ()
   ;   (printf "hello ~a~n" (unbox who))))
-  (define filesDirPath (
-  simplify-path (
-    build-path
-      (path->directory-path (find-system-path 'run-file)) 'up 'up "files"
-    )
-  ))
+
+  ; Build a map from file names to file paths
+  (define filesDirPath (get-input-files-dir (get-run-dir)))
   (define fileNames (directory-list filesDirPath))
   (define filePathsByName (build-file-map fileNames filesDirPath))
+
+  ; Get the user selection
   (define selection (get-file-selection fileNames))
   (define filePath (get-file-path selection filePathsByName))
-  (displayln (string-append "Reading file: " (path->string filePath)))
+
+  ; Get the words to remove
+  (define wordsToRemove (read-words-to-remove))
+
+  ; Read the file and clean it up
   (define lines (read-file filePath))
-  (for-each displayln lines)
+  (define fileWords
+    (foldl
+      (lambda (line acc)
+        (append (split-line line) acc)
+      )
+    '() lines)
+  )
+  (define fileWordsClean (map clean-punctuation fileWords))
+  (define fileWordsCleanWithoutStopWords
+    (filter
+      (lambda (word)
+        (not (list-includes wordsToRemove word))
+      )
+    fileWordsClean)
+  )
+
+  ; Count the words
+  (define uniqueWords (remove-duplicates fileWordsCleanWithoutStopWords))
+  (define wordCountMapEntries
+    (map
+      (lambda (word)
+        (list (string->symbol word) (count-words word fileWordsCleanWithoutStopWords))
+      )
+      uniqueWords
+    )
+  )
+
+  ; Get the top 10
+  (define topTen (get-top-rankings wordCountMapEntries 10))
+
+  ; Display the results
+  (pretty-display topTen)
 )
+
+(define (count-words word lst) 
+  (length (filter (lambda (x) (equal? x word)) lst))
+)
+
+(define (get-run-dir)
+  (path->directory-path
+    (find-system-path 'run-file)
+  )
+)
+
+(define (get-input-files-dir runDirPath)
+  (simplify-path
+    (build-path
+      runDirPath 'up 'up "files"
+    )
+  )
+)
+
+

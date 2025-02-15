@@ -21,6 +21,7 @@
     (if (and (integer? fileIndex) (<= 0 fileIndex) (< fileIndex (length fileNames)))
       (list-ref fileNames fileIndex)
       (begin
+        (system "clear")
         (displayln "Invalid selection. Please try again.")
         (get-file-selection fileNames)
       )

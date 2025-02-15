@@ -1,5 +1,5 @@
 #lang racket/base
-(require racket/list racket/pretty)
+(require racket/list racket/pretty racket/system)
 
 (module+ test
   (require rackunit))
@@ -52,53 +52,64 @@
   ;   [("-n" "--name") name "Who to say hello to" (set-box! who name)]
   ;   #:args ()
   ;   (printf "hello ~a~n" (unbox who))))
+  (define (main-loop fileNames filePathsByName)
+    ; Get the user selection
+    (define selection (get-file-selection fileNames))
+    (define filePath (get-file-path selection filePathsByName))
+    ; Read the file and clean it up
+    (define lines (read-file filePath))
+    (define fileWords
+      (foldl
+        (lambda (line acc)
+          (append (split-line line) acc)
+        )
+      '() lines)
+    )
+    (define fileWordsClean (map clean-punctuation fileWords))
+    (define fileWordsCleanWithoutStopWords
+      (filter
+        (lambda (word)
+          (not
+            (or
+              (list-includes wordsToRemove word)
+              (equal? word "")
+              (equal? word " ")
+            )
+          )
+        )
+      fileWordsClean)
+    )
+    ; Count the words
+    (define uniqueWords (remove-duplicates fileWordsCleanWithoutStopWords))
+    (define wordCountMapEntries
+      (map
+        (lambda (word)
+          (list (string->symbol word) (count-words word fileWordsCleanWithoutStopWords))
+        )
+        uniqueWords
+      )
+    )
+    ; Get the top 10
+    (define topTen (get-top-rankings wordCountMapEntries 10))
+    ; Display the results
+    (pretty-display topTen)
+    (define shouldContinue (prompt-to-continue))
+    (if shouldContinue
+      (main-loop fileNames filePathsByName)
+      (displayln "Goodbye!")
+    )
+  )
 
   ; Build a map from file names to file paths
   (define filesDirPath (get-input-files-dir (get-run-dir)))
   (define fileNames (directory-list filesDirPath))
   (define filePathsByName (build-file-map fileNames filesDirPath))
 
-  ; Get the user selection
-  (define selection (get-file-selection fileNames))
-  (define filePath (get-file-path selection filePathsByName))
-
   ; Get the words to remove
   (define wordsToRemove (read-words-to-remove))
 
-  ; Read the file and clean it up
-  (define lines (read-file filePath))
-  (define fileWords
-    (foldl
-      (lambda (line acc)
-        (append (split-line line) acc)
-      )
-    '() lines)
-  )
-  (define fileWordsClean (map clean-punctuation fileWords))
-  (define fileWordsCleanWithoutStopWords
-    (filter
-      (lambda (word)
-        (not (list-includes wordsToRemove word))
-      )
-    fileWordsClean)
-  )
-
-  ; Count the words
-  (define uniqueWords (remove-duplicates fileWordsCleanWithoutStopWords))
-  (define wordCountMapEntries
-    (map
-      (lambda (word)
-        (list (string->symbol word) (count-words word fileWordsCleanWithoutStopWords))
-      )
-      uniqueWords
-    )
-  )
-
-  ; Get the top 10
-  (define topTen (get-top-rankings wordCountMapEntries 10))
-
-  ; Display the results
-  (pretty-display topTen)
+  ; Start the main loop
+  (main-loop fileNames filePathsByName)
 )
 
 (define (count-words word lst) 
@@ -119,4 +130,12 @@
   )
 )
 
-
+(define (prompt-to-continue)
+  (displayln "Would you like to continue? (y/n)")
+  (define continue (read))
+  (system "clear")
+  (if (or (equal? continue 'y) (equal? continue 'Y))
+    #t
+    #f
+  )
+)

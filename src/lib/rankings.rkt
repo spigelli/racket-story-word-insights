@@ -81,7 +81,7 @@
   (define sortedListWithRanks
     (foldl
       (lambda (item rankingsAcc)
-        (pretty-print (list (list 'item item) (list 'rankingsAcc rankingsAcc)))
+        ; (pretty-print (list (list 'item item) (list 'rankingsAcc rankingsAcc)))
         (define prevRankings (get-rankings rankingsAcc))
         (define prevRank (get-last-ranking prevRankings))
         (define isFinishedCheckingTie (is-finished-checking-for-tie rankingsAcc))
